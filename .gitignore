@@ -1,0 +1,8 @@
+venv/
+src/mnist
+src/netsaver
+src/probeview
+src/__pycache__
+.idea/
+src/testing/data/
+src/testing/__pycache__/
