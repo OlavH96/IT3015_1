@@ -1,17 +1,12 @@
-import tflowtools as tft
-import argparse
+import sys
+
 import matplotlib.pyplot as plt
-import math
-import ArgumentParser
-import sys
 import tensorflow as tf
-import mnist.mnist_basics as mnist
-import os
-import sys
-import random
+
+import ArgumentParser
 import testing.DataLoader as DataLoader
-import testing.NeuralNet as NeuralNet
-from ImageWithLabel import *
+import tflowtools as TFT
+import numpy as np
 
 
 def showSomeImages(pairs, n):
@@ -27,72 +22,54 @@ def showSomeImages(pairs, n):
 
 if __name__ == '__main__':
 
-    sys.argv.append("-src")
-    sys.argv.append(".")
-
     args = ArgumentParser.parseArgs()
-    print(args)
 
     (layers, sizes) = ArgumentParser.handleNDIM(args.ndim)
-    print(layers)
-    print(sizes)
 
     haf = args.haf
-    print(haf)
 
     src = args.src
-    print(src)
 
-    (images, labels) = DataLoader.load()
+    steps = args.steps
+
+    learning_rate = args.lr
+
+    (images, labels) = DataLoader.load('training')
+    flat_labels = [label[0] for label in labels]
+
     S = len(images)
     TeF = args.tfrac
     VaF = args.vfrac
 
-    training_set_size = S * (1 - (TeF + VaF))
-    validation_set_size = S * VaF
-    test_set_size = S * TeF
-
-    training_set_size = round(0.04 * S)
-    validation_set_size = round(0.01 * S)
-    test_set_size = round(0.01 * S)
+    training_set_size = round(S * (1 - (TeF + VaF)))
+    validation_set_size = round(S * VaF)
+    test_set_size = round(S * TeF)
 
     print(training_set_size)
     print(validation_set_size)
     print(test_set_size)
 
-    training_set = []
-    validation_set = []
-    test_set = []
-
-    for i in range(0, training_set_size):
-        pair = ImageWithLabel(images[i], labels[i])
-        training_set.append(pair)
-
-    for i in range(training_set_size, training_set_size + validation_set_size):
-        pair = ImageWithLabel(images[i], labels[i])
-        validation_set.append(pair)
-
-    for i in range(training_set_size + validation_set_size, training_set_size + validation_set_size + test_set_size):
-        pair = ImageWithLabel(images[i], labels[i])
-        test_set.append(pair)
-
-    # nnet = NeuralNet.NeuralNet(1)
-
-    # showSomeImages(test_set, 10)
+    (training_set, validation_set, test_set) = DataLoader.split(images, labels,
+                                                                training_set_size,
+                                                                validation_set_size,
+                                                                test_set_size)
 
     yDim = len(images[0])
     xDim = len(images[0][0])
 
-    x = tf.placeholder(dtype=tf.float32, shape=[None, xDim, yDim])  # Image data
-    y = tf.placeholder(dtype=tf.int32, shape=[None])  # Label
+    inputLayer = tf.placeholder(dtype=tf.float32, shape=[None, xDim, yDim], name='image')  # Image data
+    outputLayer = tf.placeholder(dtype=tf.int32, shape=[None], name='label')  # Label
+    images_flat = tf.layers.flatten(inputLayer)
+    # images_flat = tf.contrib.layers.flatten(inputLayer)  # Flatten 2d array to 1d
 
-    images_flat = tf.contrib.layers.flatten(x)  # Flatten 2d array to 1d
+    logits = tf.contrib.layers.fully_connected(inputs=images_flat,
+                                               num_outputs=10,
+                                               activation_fn=tf.nn.relu)
 
-    logits = tf.contrib.layers.fully_connected(images_flat, 10, tf.nn.relu)  # 10 output nodes
-
-    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
+    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=outputLayer,
                                                                          logits=logits))
-    train_op = tf.train.AdamOptimizer(learning_rate=0.01).minimize(loss)
+    train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+    # train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
 
     correct_pred = tf.argmax(logits, 1)
 
@@ -103,13 +80,59 @@ if __name__ == '__main__':
     print("loss: ", loss)
     print("predicted_labels: ", correct_pred)
 
-    tf.set_random_seed(1234)
+    # tf.set_random_seed(1234)
+
     sess = tf.Session()
+    # TFT.viewprep(sess)
 
     sess.run(tf.global_variables_initializer())
-    for i in range(201):
-        print('EPOCH', i)
-        _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: images[i], y: labels[i]})
+    accuracy_data = []
+    for i in range(steps):
+        _, accuracy_val = sess.run([train_op, accuracy], feed_dict={inputLayer: images, outputLayer: flat_labels})
+        accuracy_data.append(accuracy_val)
+        print("Accuracy: ", accuracy_val)
         if i % 10 == 0:
-            print("Loss: ", loss)
-        print('DONE WITH EPOCH')
+            print("Epoch: ", i)
+
+    test_set_images = [t.image for t in test_set]
+    test_set_labels = [t.label for t in test_set]
+
+    predicted = sess.run([correct_pred], feed_dict={inputLayer: test_set_images})[0]
+
+    print("Predicted", predicted)
+    print("Actual: ", test_set_labels)
+
+    correct = 0
+    total = test_set_size
+
+    for i in range(0, len(predicted)):
+        p = predicted[i]
+        ac = test_set[i].label
+
+        if p == ac:
+            correct = correct + 1
+
+    print("Total: ", total)
+    print("Correct: ", correct)
+
+    print("Accuracy on test set: ", correct / total)
+
+    for i in range(0, 10):
+        tpair = test_set[i]
+        image = tpair.image
+        actual_label = tpair.label
+        pred = predicted[i]
+
+        plt.imshow(image, cmap="gray")
+
+        title = "Truth:        {0}\nPrediction: {1}".format(actual_label, pred)
+        plt.title(title)
+        plt.show()
+
+    plt.plot(accuracy_data)
+    plt.title(str(learning_rate))
+    plt.ylabel("Epoch")
+    plt.xlabel("Accuracy")
+    plt.show()
+
+    # TFT.fireup_tensorboard('probeview')
