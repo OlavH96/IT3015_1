@@ -1,7 +1,8 @@
 import numpy as np
 
 
-class CaseHandler:
+class CaseManager:
+
     def __init__(self, cfunc, vfrac=0, tfrac=0):
         self.casefunc = cfunc
         self.validation_fraction = vfrac
@@ -18,7 +19,7 @@ class CaseHandler:
         np.random.shuffle(ca)  # Randomly shuffle all cases
         separator1 = round(len(self.cases) * self.training_fraction)
         separator2 = separator1 + round(len(self.cases) * self.validation_fraction)
-        self.training_cases = ca[0:separator1]
+        self.training_cases = ca[:separator1]
         self.validation_cases = ca[separator1:separator2]
         self.testing_cases = ca[separator2:]
 

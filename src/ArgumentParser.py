@@ -4,7 +4,7 @@ import argparse
 def parseArgs():
     parser = argparse.ArgumentParser(description='Configure neural net')
 
-    parser.add_argument('-ndim', dest='ndim', type=list, help='Network Dimensions', default=[2, 2, 2])
+    parser.add_argument('-ndim', dest='ndim', type=int, nargs="*", help='Network Dimensions', default=[2, 2, 1])
     parser.add_argument('-haf', dest='haf', type=str, help='Hidden Activation Function', default="sigmoid",
                         choices=["sigmoid", "tanh", "elu", "softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
     parser.add_argument('-oaf', dest='oaf', type=str, help='Output Activation Function', default="sigmoid",
@@ -42,8 +42,4 @@ def handleNDIM(ndim):
     if dim is not rest:
         raise Exception("Network dimensions does not match: %i layers, got %i sizes" % (dim, rest))
     else:
-        print("Network dimensions match")
-        print("ndim")
-        print(ndim)
         return dim, ndim[1:]
-

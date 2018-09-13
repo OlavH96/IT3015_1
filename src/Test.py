@@ -7,6 +7,7 @@ import ArgumentParser
 import testing.DataLoader as DataLoader
 import tflowtools as TFT
 import numpy as np
+from Config import *
 
 
 def showSomeImages(pairs, n):
@@ -40,7 +41,10 @@ if __name__ == '__main__':
 
     # Handle Arguments
     args = ArgumentParser.parseArgs()
-
+    print(args)
+    config = Config(args)
+    print(config.haf)
+    print(config.optimizer)
     (layers, sizes) = ArgumentParser.handleNDIM(args.ndim)
     print("Layers: ", layers, ", Sizes: ", sizes)
     steps = args.steps

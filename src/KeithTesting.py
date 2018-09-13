@@ -9,12 +9,12 @@ if __name__ == '__main__':
     # 1 output node
     # 2 hidden nodes i ett layer
 
-    input_size = 5
-    hidden_nodes = 3
+    input_size = 11
+    hidden_nodes = 5
     output_size = 1
-    data_length = 100
-    learning_rate = 0.5
-    steps = 5000
+    data_length = 1000
+    learning_rate = 1
+    steps = 500
 
     raw_data = tft.gen_symvect_dataset(input_size, data_length)
 
@@ -36,7 +36,9 @@ if __name__ == '__main__':
     w2 = tf.Variable(tf.random_normal([hidden_nodes, output_size], stddev=0.03), name='w2')
     b2 = tf.Variable(tf.random_normal([output_size]), name='b2')
 
-    y_est = tf.sigmoid(tf.matmul(hidden_output, w2) + b2)
+    sig = tf.sigmoid
+
+    y_est = sig(tf.matmul(hidden_output, w2) + b2)
 
     error = tf.reduce_mean(tf.square(y_est - y))  # MSE
 
@@ -53,40 +55,19 @@ if __name__ == '__main__':
     for i in range(steps):
         _, err = sess.run([training, error], feed_dict={x: data, y: labels})
         errors.append(err)
-        # if i % 10 == 9:
-        # print(acc)
-    plt.plot(errors)
+
+    plt.scatter(range(steps), errors, s=5)
     plt.xlabel("Iterations")
     plt.ylabel("Error")
     plt.show()
 
-    test_data_size = 1000
+    test_data_size = int(data_length/5)
 
     raw_test_data = tft.gen_symvect_dataset(input_size, test_data_size)
-    print("Test Data")
-    print(raw_test_data)
+
     test_data = [data[:input_size] for data in raw_test_data]
     test_labels = [[data[input_size]] for data in raw_test_data]
-    print(test_data)
-
-    correct = 0
-    for i in range(test_data_size):
-        data = test_data[i]
-        label = test_labels[i][0]
-
-        est = sess.run(y_est, feed_dict={x: [data]})[0]
-        print(label)
-        print(est)
-        if label == 1 and est > 0.5:
-            correct += 1
-        if label == 0 and est < 0.5:
-            correct += 1
-
-    print(correct, " / ", test_data_size)
-
-    exit(1)
     res = sess.run(y_est, feed_dict={x: test_data})
-    print("Result")
     print(res)
 
     correct = 0
@@ -95,13 +76,16 @@ if __name__ == '__main__':
         label = test_labels[i][0]
         est = res[i][0]
 
-        print(data)
-        print(label)
-        print(est)
+        # print(data)
+        # print(label)
+        # print(est)
 
         if label == 1 and est > 0.5:
             correct += 1
         if label == 0 and est < 0.5:
             correct += 1
 
-    print(correct)
+    print(correct, " / ", test_data_size, " correct")
+    print((correct/test_data_size) * 100, " % correct")
+
+    sess.close()
