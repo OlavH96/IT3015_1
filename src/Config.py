@@ -6,10 +6,10 @@ class Config:
         self.args = args
         print(args)
 
-        self.ndim = handleNDIM(self.args.ndim)
+        (self.number_of_layers, self.layer_sizes) = handleNDIM(self.args.ndim)
         self.haf = parseHAF(self.args.haf)
         self.oaf = parseOAF(self.args.oaf)
-        self.cf = self.args.cf
+        self.cf = parseCF(self.args.cf)
         self.lr = self.args.lr
         self.iwr = self.args.iwr
         self.optimizer = parseOptimizer(self.args.optimizer)
@@ -46,6 +46,7 @@ def parseHAF(haf):
         "sigmoid": tf.sigmoid,
         "tanh": tf.tanh,
         "relu": tf.nn.relu,
+        "softmax": tf.nn.softmax,
         "default": tf.sigmoid
     }
     return options[haf] or options["default"]
@@ -55,10 +56,21 @@ def parseOAF(oaf):
     return parseHAF(oaf)
 
 
+def parseCF(cf):
+    options = {
+        "mse": tf.losses.mean_squared_error,
+        "ce": tf.losses.sigmoid_cross_entropy,
+        "default": tf.train.GradientDescentOptimizer
+    }
+    return options[cf] or options["default"]
+
+
 def parseOptimizer(optimizer):
     options = {
-        "gradientdecent": tf.train.GradientDescentOptimizer,
+        "gradientdescent": tf.train.GradientDescentOptimizer,
         "adam": tf.train.AdamOptimizer,
+        "rmsprop": tf.train.RMSPropOptimizer,
+        "adagrad": tf.train.AdagradDAOptimizer,
         "default": tf.train.GradientDescentOptimizer
     }
     return options[optimizer] or options["default"]
@@ -67,6 +79,9 @@ def parseOptimizer(optimizer):
 def parseMapLayers(map_layers):
     return "NYI"
 
+def parseIWR(iwr):
+
+    
 
 def parseMDend(mdend):
     return "NYI"

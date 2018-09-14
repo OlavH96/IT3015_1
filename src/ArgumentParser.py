@@ -6,13 +6,13 @@ def parseArgs():
 
     parser.add_argument('-ndim', dest='ndim', type=int, nargs="*", help='Network Dimensions', default=[2, 2, 1])
     parser.add_argument('-haf', dest='haf', type=str, help='Hidden Activation Function', default="sigmoid",
-                        choices=["sigmoid", "tanh", "elu", "softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
+                        choices=["sigmoid", "tanh", "elu", "softmax", "softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
     parser.add_argument('-oaf', dest='oaf', type=str, help='Output Activation Function', default="sigmoid",
-                        choices=["sigmoid", "tanh", "elu", "softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
-    parser.add_argument('-cf', dest='cf', help='Cost Function')
+                        choices=["sigmoid", "tanh", "elu", "softmax","softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
+    parser.add_argument('-cf', dest='cf', help='Cost Function', default="mse", choices=["mse", "ce"])
     parser.add_argument('-lr', dest='lr', help='Learning Rate', type=float, default=0.01)
     parser.add_argument('-iwr', dest='iwr', help='Initial Weight Range', type=list, default=[0, 1])
-    parser.add_argument('-optimizer', dest='optimizer', help='Optimizer', type=str, default="gradientdecent")
+    parser.add_argument('-optimizer', dest='optimizer', help='Optimizer', type=str, default="gradientdescent", choices=["gradientdescent", "adam", "rmsprop","adagrad"])
     parser.add_argument('-src', dest='src', help='Data Source', type=str)  # required=True
     parser.add_argument('-case_fraction', dest='case_fraction', help='Case Fraction', type=float, default=1)
     parser.add_argument('-vfrac', dest='vfrac', help='Validation Fraction', type=float, default=0.1)

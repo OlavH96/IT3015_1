@@ -28,4 +28,4 @@ class Layer:
         self.net.add_layer(self)
 
     def __str__(self):
-        return "Index=" + str(self.index) + ", ActivationFunction=" + str(self.activation_function)
+        return "Index=" + str(self.index) + ", ActivationFunction=" + str(self.activation_function) +", input_size="+str(self.input_size)+", output="+str(self.output_size)

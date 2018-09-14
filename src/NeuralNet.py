@@ -3,16 +3,18 @@ import numpy as np
 from Layer import *
 from CaseManager import *
 import matplotlib.pyplot as plt
-
+import tflowtools as TFT
 
 class NeuralNet:
 
-    def __init__(self, config):
+    def __init__(self, config, case_manager):
         self.config = config
+        self.case_manager = case_manager
         self.layers = []
 
         self.learning_rate = config.lr
-        (self.number_of_layers, self.layer_sizes) = config.ndim
+        self.number_of_layers = config.number_of_layers
+        self.layer_sizes = config.layer_sizes
         self.input_layer_size = self.layer_sizes[0]
         self.output_layer_size = self.layer_sizes[-1]
         self.hidden_layer_sizes = self.layer_sizes[1:-1] if len(self.layer_sizes) > 2 else []
@@ -37,7 +39,7 @@ class NeuralNet:
         print(self.number_of_layers)
 
         for i, outsize in enumerate(self.layer_sizes[1:]):
-            layer = Layer(net=self, index=i + 1, input=invar, input_size=input_size, output_size=outsize,
+            layer = Layer(net=self, index=i, input=invar, input_size=input_size, output_size=outsize,
                           activation_function=self.oaf if i is self.number_of_layers - 2 else self.haf)
             invar = layer.output
             input_size = layer.output_size
@@ -50,18 +52,25 @@ class NeuralNet:
         self.configure_training()
 
     def configure_training(self):
-        self.error = tf.reduce_mean(tf.square(self.target - self.output), name='MSE')
+
+        #self.error = tf.reduce_mean(tf.square(self.target - self.output), name='MSE')
+        # self.error = tf.losses.mean_squared_error(self.target, self.output)
+        self.error = self.config.cf(self.target, self.output)
         self.predictor = self.output  # Simple prediction runs will request the value of output neurons
         # Defining the training operator
         optimizer = self.optimizer(self.learning_rate)
         self.trainer = optimizer.minimize(self.error, name='Optimizer')
-        return "NYI"
 
     def do_training(self, cases, labels):
 
         sess = tf.Session()
         self.sess = sess
         sess.run(tf.global_variables_initializer())
+
+        # TFT.viewprep(sess)
+        # t_cases = self.case_manager.get_training_cases()
+        # print(t_cases)
+
         feeder = {self.input: cases, self.target: labels}
         errors = []
         for i in range(self.steps):
@@ -69,11 +78,13 @@ class NeuralNet:
             _, res = sess.run([self.trainer, self.error], feed_dict=feeder)
             errors.append(res)
             if i % (self.steps / 10) == (self.steps / 10) - 1:
-                print(res)
+                print("Cost: "+str(res))
+
+        # TFT.fireup_tensorboard(logdir='probeview')
 
         plt.scatter(range(self.steps), errors, s=5)
         plt.xlabel("Iterations")
-        plt.ylabel("Error")
+        plt.ylabel("Cost")
         plt.show()
         print(res)
 
@@ -84,7 +95,7 @@ class NeuralNet:
         sess = self.sess
         # sess.run(tf.global_variables_initializer())
         res = sess.run(self.output, feed_dict=feeder)
-        print(res)
+        # print(res)
         correct = 0
         for i in range(len(test_cases)):
             data = test_cases[i]
@@ -109,6 +120,7 @@ class NeuralNet:
     def __str__(self):
         out = "Net: layers=" + str(self.number_of_layers) + "\n"
         out += "Optimizer=" + str(self.optimizer) + ", learning_rate=" + str(self.learning_rate) + "\n"
+        out += "CostFunction="+str(self.error)+"\n"
         out += str(self.input) + "\n"
 
         for layer in self.layers:
