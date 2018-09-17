@@ -11,7 +11,7 @@ def parseArgs():
                         choices=["sigmoid", "tanh", "elu", "softmax","softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
     parser.add_argument('-cf', dest='cf', help='Cost Function', default="mse", choices=["mse", "ce"])
     parser.add_argument('-lr', dest='lr', help='Learning Rate', type=float, default=0.01)
-    parser.add_argument('-iwr', dest='iwr', help='Initial Weight Range', type=list, default=[0, 1])
+    parser.add_argument('-iwr', dest='iwr', type=float, nargs="*", help='Initial Weight Range', default=[-0.1, 0.1])
     parser.add_argument('-optimizer', dest='optimizer', help='Optimizer', type=str, default="gradientdescent", choices=["gradientdescent", "adam", "rmsprop","adagrad"])
     parser.add_argument('-src', dest='src', help='Data Source', type=str)  # required=True
     parser.add_argument('-case_fraction', dest='case_fraction', help='Case Fraction', type=float, default=1)

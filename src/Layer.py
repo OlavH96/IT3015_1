@@ -4,7 +4,7 @@ import numpy as np
 
 class Layer:
 
-    def __init__(self, net, index, input, input_size, output_size, activation_function):
+    def __init__(self, net, index, input, input_size, output_size, activation_function, iwr_lower_bound=-0.1, iwr_upper_bound=0.1):
         self.net = net
         self.index = index
         self.input = input
@@ -12,15 +12,17 @@ class Layer:
         self.output_size = output_size
         self.name = "Layer-" + str(index)
         self.activation_function = activation_function
+        self.iwr_lower_bound = iwr_lower_bound
+        self.iwr_upper_bound = iwr_upper_bound
 
         self.build()
 
     def build(self):
         n = self.output_size
 
-        self.weights = tf.Variable(np.random.uniform(-.1, .1, size=(self.input_size, n)),
+        self.weights = tf.Variable(np.random.uniform(self.iwr_lower_bound, self.iwr_upper_bound, size=(self.input_size, n)),
                                    name=self.name + '-wgt', trainable=True)  # True = default for trainable anyway
-        self.biases = tf.Variable(np.random.uniform(-.1, .1, size=n),
+        self.biases = tf.Variable(np.random.uniform(self.iwr_lower_bound, self.iwr_upper_bound, size=n),
                                   name=self.name + '-bias', trainable=True)  # First bias vector
         self.output = self.activation_function(tf.matmul(self.input, self.weights) + self.biases,
                                                name=self.name + '-out')

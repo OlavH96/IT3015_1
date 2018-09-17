@@ -11,7 +11,7 @@ class Config:
         self.oaf = parseOAF(self.args.oaf)
         self.cf = parseCF(self.args.cf)
         self.lr = self.args.lr
-        self.iwr = self.args.iwr
+        self.iwr_lower_bound, self.iwr_upper_bound = parseIWR(self.args.iwr)
         self.optimizer = parseOptimizer(self.args.optimizer)
         self.src = self.args.src
         self.case_fraction = self.args.case_fraction
@@ -81,7 +81,13 @@ def parseMapLayers(map_layers):
 
 def parseIWR(iwr):
 
-    
+    if isinstance(iwr, str):
+        print("IWR is a string, panic!")
+        return iwr
+    if len(iwr) is not 2:
+        raise Exception("IWR length must be 2")
+    print("IWR is "+str(iwr))
+    return iwr[0], iwr[1]
 
 def parseMDend(mdend):
     return "NYI"

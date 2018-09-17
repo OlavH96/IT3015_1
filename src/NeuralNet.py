@@ -23,6 +23,8 @@ class NeuralNet:
         self.optimizer = config.optimizer
         self.steps = config.steps
 
+        self.iwr_lower_bound, self.iwr_upper_bound = config.iwr_lower_bound, config.iwr_upper_bound
+
         print(self.layers)
         print(self.layer_sizes)
         print(self.oaf)
@@ -36,11 +38,10 @@ class NeuralNet:
 
         invar = self.input
         input_size = self.input_layer_size
-        print(self.number_of_layers)
 
         for i, outsize in enumerate(self.layer_sizes[1:]):
             layer = Layer(net=self, index=i, input=invar, input_size=input_size, output_size=outsize,
-                          activation_function=self.oaf if i is self.number_of_layers - 2 else self.haf)
+                          activation_function=self.oaf if i is self.number_of_layers - 2 else self.haf, iwr_lower_bound=self.config.iwr_lower_bound, iwr_upper_bound=self.config.iwr_upper_bound)
             invar = layer.output
             input_size = layer.output_size
 
@@ -75,10 +76,12 @@ class NeuralNet:
         errors = []
         for i in range(self.steps):
 
+            # For minibatch here
             _, res = sess.run([self.trainer, self.error], feed_dict=feeder)
             errors.append(res)
             if i % (self.steps / 10) == (self.steps / 10) - 1:
                 print("Cost: "+str(res))
+            # Consider validation testing here or something
 
         # TFT.fireup_tensorboard(logdir='probeview')
 
@@ -90,16 +93,21 @@ class NeuralNet:
 
     def do_testing(self, test_cases, test_labels):
 
-        feeder = {self.input: test_cases}
+        feeder = {self.input: test_cases, self.target: test_labels}
 
         sess = self.sess
+
+        # correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(self.target, tf.int32), 1)
         # sess.run(tf.global_variables_initializer())
         res = sess.run(self.output, feed_dict=feeder)
         # print(res)
+        # return ""
+        # TFT.viewprep(sess)
+        # TFT.fireup_tensorboard('probeview')
         correct = 0
         for i in range(len(test_cases)):
             data = test_cases[i]
-            label = test_labels[i]
+            label = test_labels[i][0]
             est = res[i][0]
 
             # print(data)
