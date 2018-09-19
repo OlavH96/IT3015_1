@@ -7,6 +7,7 @@ from CaseManager import *
 import testing.DataLoader as DataLoader
 import numpy as np
 import mnist.mnist_basics as mnist
+from Case import *
 
 
 def to_one_hot_int_1d(length, number):
@@ -31,22 +32,19 @@ if __name__ == '__main__':
     args = ArgumentParser.parseArgs()
     config = Config(args)
 
-    caseManager = CaseManager(cfunc=(lambda: TFT.gen_symvect_dataset(config.layer_sizes[0], count=2000)), vfrac=0,
+    caseManager = CaseManager(cfunc=(lambda: TFT.gen_symvect_dataset(config.layer_sizes[0], count=2000)), vfrac=0.1,
                               tfrac=0.1)
+
     nn = NeuralNet(config, caseManager)
     print(nn)
 
-    cases = TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=500)
-    data = [case[:-1] for case in cases]
-    labels = [[case[2]] for case in cases]
+    case_list = caseManager.get_training_cases()  # TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=500)
 
-    nn.do_training(data, labels)
+    nn.do_training()
 
-    test_cases = TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=5000)
-    test_data = [case[:-1] for case in test_cases]
-    test_labels = [[case[2]] for case in test_cases]
+    test_case_list = caseManager.get_testing_cases()  # TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=5000)
 
-    nn.do_testing(test_data, test_labels)
+    nn.do_testing(test_case_list)
 
     # raw = mnist.load_flat_cases("all_flat_mnist_training_cases")
     # print(len(raw[0]))

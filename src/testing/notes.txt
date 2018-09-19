@@ -1,0 +1,1 @@
+gen_symvect: -steps 1500 -lr 0.05 -oaf sigmoid -haf tanh -ndim 3 101 50 1 -mbsize 2000

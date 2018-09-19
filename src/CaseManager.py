@@ -1,14 +1,22 @@
 import numpy as np
+from Case import *
 
 
 class CaseManager:
 
-    def __init__(self, cfunc, vfrac=0, tfrac=0):
+    def __init__(self, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1):
         self.casefunc = cfunc
         self.validation_fraction = vfrac
         self.test_fraction = tfrac
         self.training_fraction = 1 - (vfrac + tfrac)
-        self.generate_cases()
+        self.labels = labels
+        if cases:
+            print("has cases")
+            self.cases = cases
+        else:
+            print("Generating cases")
+            self.generate_cases()
+
         self.organize_cases()
 
     def generate_cases(self):
@@ -20,8 +28,15 @@ class CaseManager:
         separator1 = round(len(self.cases) * self.training_fraction)
         separator2 = separator1 + round(len(self.cases) * self.validation_fraction)
         self.training_cases = ca[:separator1]
+        self.training_cases = [Case(input=case[:-1], target=[case[-1]]) for case in self.training_cases]
         self.validation_cases = ca[separator1:separator2]
+        self.validation_cases = [Case(input=case[:-1], target=[case[-1]]) for case in self.validation_cases]
         self.testing_cases = ca[separator2:]
+        self.testing_cases = [Case(input=case[:-1], target=[case[-1]]) for case in self.testing_cases]
+
+        if self.labels:
+            self.training_cases = [Case(input=self.training_cases[i], target=self.labels[i]) for i in range(len(self.training_cases))]
+            self.training_cases = [Case(input=case[:-1], target=[case[-1]]) for case in self.training_cases]
 
     def get_training_cases(self): return self.training_cases
 

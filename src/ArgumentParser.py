@@ -16,10 +16,10 @@ def parseArgs():
     parser.add_argument('-src', dest='src', help='Data Source', type=str)  # required=True
     parser.add_argument('-case_fraction', dest='case_fraction', help='Case Fraction', type=float, default=1)
     parser.add_argument('-vfrac', dest='vfrac', help='Validation Fraction', type=float, default=0.1)
-    parser.add_argument('-vint', dest='vint', help='Validation Interval', type=float, default=1)
+    parser.add_argument('-vint', dest='vint', help='Validation Interval', type=float, default=10)
     parser.add_argument('-tfrac', dest='tfrac', help='Test Fraction', type=float, default=0.1)
     parser.add_argument('-msize', dest='msize', help='Minibatch Size', type=int, default=100)
-    parser.add_argument('-mbsize', dest='mbsize', help='Map Batch Size', type=int, default=0)
+    parser.add_argument('-mbsize', dest='mbsize', help='Map Batch Size', type=int, default=1)
     parser.add_argument('-steps', dest='steps', help='Minibatch Steps', type=int, default=100)
     parser.add_argument('-map_layers', dest='map_layers', help='Map Layers', type=int, default=0)
     parser.add_argument('-mdend', dest='mdend', help='Map Dendrograms', type=list, default=[])
