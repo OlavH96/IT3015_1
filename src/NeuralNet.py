@@ -59,11 +59,8 @@ class NeuralNet:
 
     def configure_training(self):
 
-        # self.error = tf.reduce_mean(tf.square(self.target - self.output), name='MSE')
-        # self.error = tf.losses.mean_squared_error(self.target, self.output)
         self.error = self.config.cf(self.target, self.output)
         self.predictor = self.output  # Simple prediction runs will request the value of output neurons
-        # Defining the training operator
         optimizer = self.optimizer(self.learning_rate)
         self.trainer = optimizer.minimize(self.error, name='Optimizer')
 
@@ -95,15 +92,15 @@ class NeuralNet:
                 errors.append((step, res))
             self.consider_validation_testing(step, sess)
             if step % (self.steps / 10) == 0:
-                print(str((step / self.steps)*100)+"% done, Cost: " + str(res))
+                print(str((step / self.steps) * 100) + "% done, Cost: " + str(res))
             # Consider validation testing here or something
 
         # TFT.fireup_tensorboard(logdir='probeview')
 
         # Plots.line([errors, self.validation_error_history])
         print("Finished Training")
-        print("Final training Error: "+ str(errors[-1][1]))
-        print("Final validation Error: "+ str(self.validation_error_history[-1][1]))
+        print("Final training Error: " + str(errors[-1][1]))
+        print("Final validation Error: " + str(self.validation_error_history[-1][1]))
         Plots.scatter([errors, self.validation_error_history], ["Training Error", "Validation Error"])
 
     def should_run_validation_test(self, step):
@@ -121,7 +118,10 @@ class NeuralNet:
             # print(step, ", error=", error)
             self.validation_error_history.append((step, error))
 
-    def do_testing(self, case_list, scenario="testing"):
+    def do_testing(self, case_list=None, scenario="testing"):
+
+        if scenario == "testing":
+            case_list = self.case_manager.get_testing_cases()
 
         inputs = [case.input for case in case_list]
         targets = [case.target for case in case_list]
@@ -148,10 +148,9 @@ class NeuralNet:
             if label == est:
                 correct += 1
         if scenario is not "validation":
-
             print(correct, " / ", len(case_list), " correct")
             print((correct / len(case_list)) * 100, " % correct")
-            print(1-(correct / len(case_list)), " error")
+            print(1 - (correct / len(case_list)), " error")
 
         return 1 - (correct / len(case_list))
 

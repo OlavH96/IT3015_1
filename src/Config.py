@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tflowtools as TFT
 
 
 class Config:
@@ -26,6 +27,42 @@ class Config:
         self.dw = parseDW(self.args.dw)
         self.db = parseDB(self.args.db)
 
+        self.src_function, self.src_args = handleSrc(self.args.src)
+
+
+def handleSrc(src):
+
+    type = src[0]
+
+    if type == "function":
+        return handleSrcFunction(src)
+    elif type == "file":
+        return handleSrcFile(src)
+    else:
+        raise Exception("Invalid src type, must be 'function' or 'file'")
+
+
+def handleSrcFile(src):
+    return "NYI"
+
+def handleSrcFunction(src):
+    module_name = src[1]
+    function_name = src[2]
+    function_arguments = src[3:]
+
+    module = __import__(module_name)  # import the module
+    function = getattr(module, function_name)
+    rest = list(map(lambda x: int(x), function_arguments))
+
+    function(*rest)  # * unpacks list into arguments for the function
+
+    print("SRC")
+    print(type)
+    print(module_name)
+    print(function_name)
+    print(function_arguments)
+
+    return function, rest
 
 def handleNDIM(ndim):
     print(ndim)
@@ -46,10 +83,9 @@ def parseHAF(haf):
         "sigmoid": tf.sigmoid,
         "tanh": tf.tanh,
         "relu": tf.nn.relu,
-        "softmax": tf.nn.softmax,
-        "default": tf.sigmoid
+        "softmax": tf.nn.softmax
     }
-    return options[haf] or options["default"]
+    return options[haf] or options["sigmoid"]
 
 
 def parseOAF(oaf):
@@ -59,10 +95,9 @@ def parseOAF(oaf):
 def parseCF(cf):
     options = {
         "mse": tf.losses.mean_squared_error,
-        "ce": tf.losses.sigmoid_cross_entropy,
-        "default": tf.train.GradientDescentOptimizer
+        "ce": tf.losses.sigmoid_cross_entropy
     }
-    return options[cf] or options["default"]
+    return options[cf] or options["mse"]
 
 
 def parseOptimizer(optimizer):
@@ -70,24 +105,24 @@ def parseOptimizer(optimizer):
         "gradientdescent": tf.train.GradientDescentOptimizer,
         "adam": tf.train.AdamOptimizer,
         "rmsprop": tf.train.RMSPropOptimizer,
-        "adagrad": tf.train.AdagradDAOptimizer,
-        "default": tf.train.GradientDescentOptimizer
+        "adagrad": tf.train.AdagradDAOptimizer
     }
-    return options[optimizer] or options["default"]
+    return options[optimizer] or options["gradientdescent"]
 
 
 def parseMapLayers(map_layers):
     return "NYI"
 
-def parseIWR(iwr):
 
+def parseIWR(iwr):
     if isinstance(iwr, str):
         print("IWR is a string, panic!")
         return iwr
     if len(iwr) is not 2:
         raise Exception("IWR length must be 2")
-    print("IWR is "+str(iwr))
+    print("IWR is " + str(iwr))
     return iwr[0], iwr[1]
+
 
 def parseMDend(mdend):
     return "NYI"

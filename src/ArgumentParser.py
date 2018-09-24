@@ -13,7 +13,7 @@ def parseArgs():
     parser.add_argument('-lr', dest='lr', help='Learning Rate', type=float, default=0.01)
     parser.add_argument('-iwr', dest='iwr', type=float, nargs="*", help='Initial Weight Range', default=[-0.1, 0.1])
     parser.add_argument('-optimizer', dest='optimizer', help='Optimizer', type=str, default="gradientdescent", choices=["gradientdescent", "adam", "rmsprop","adagrad"])
-    parser.add_argument('-src', dest='src', help='Data Source', type=str)  # required=True
+    parser.add_argument('-src', dest='src', help='Data Source: File or tflowtools function call with args.', type=str, nargs="*")
     parser.add_argument('-case_fraction', dest='case_fraction', help='Case Fraction', type=float, default=1)
     parser.add_argument('-vfrac', dest='vfrac', help='Validation Fraction', type=float, default=0.1)
     parser.add_argument('-vint', dest='vint', help='Validation Interval', type=float, default=10)
@@ -27,6 +27,9 @@ def parseArgs():
     parser.add_argument('-db', dest='db', help='Display Biases', type=list, default=[])
 
     args = parser.parse_args()
+
+    print("Src")
+    print(args.src)
 
     return args
 

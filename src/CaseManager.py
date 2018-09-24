@@ -4,8 +4,9 @@ from Case import *
 
 class CaseManager:
 
-    def __init__(self, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1):
+    def __init__(self, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1, case_fraction=1):
         self.casefunc = cfunc
+        self.case_fraction = case_fraction
         self.validation_fraction = vfrac
         self.test_fraction = tfrac
         self.training_fraction = 1 - (vfrac + tfrac)
@@ -25,6 +26,10 @@ class CaseManager:
     def organize_cases(self):
         ca = np.array(self.cases)
         np.random.shuffle(ca)  # Randomly shuffle all cases
+        # Handle case fraction
+        ca = ca[:round(len(ca)*self.case_fraction)]
+        self.cases = self.cases[:round(len(self.cases)*self.case_fraction)]
+
         separator1 = round(len(self.cases) * self.training_fraction)
         separator2 = separator1 + round(len(self.cases) * self.validation_fraction)
         self.training_cases = ca[:separator1]

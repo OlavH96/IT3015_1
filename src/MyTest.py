@@ -31,20 +31,23 @@ def scale_array(array):
 if __name__ == '__main__':
     args = ArgumentParser.parseArgs()
     config = Config(args)
+    caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),
+                              vfrac=config.vfrac,
+                              tfrac=config.tfrac,
+                              case_fraction=config.case_fraction)
 
-    caseManager = CaseManager(cfunc=(lambda: TFT.gen_symvect_dataset(config.layer_sizes[0], count=2000)), vfrac=0.1,
-                              tfrac=0.1)
+    # caseManager = CaseManager(cfunc=(lambda: TFT.gen_symvect_dataset(config.layer_sizes[0], count=2000)),
+    #                           vfrac=config.vfrac,
+    #                           tfrac=config.tfrac,
+    #                           case_fraction=config.case_fraction)
 
     nn = NeuralNet(config, caseManager)
     print(nn)
-
-    case_list = caseManager.get_training_cases()  # TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=500)
+    #exit(1)
 
     nn.do_training()
 
-    test_case_list = caseManager.get_testing_cases()  # TFT.gen_symvect_dataset(vlen=nn.input_layer_size, count=5000)
-
-    nn.do_testing(test_case_list)
+    nn.do_testing()
 
     # raw = mnist.load_flat_cases("all_flat_mnist_training_cases")
     # print(len(raw[0]))
