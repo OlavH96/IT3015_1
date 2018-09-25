@@ -31,51 +31,21 @@ def scale_array(array):
 if __name__ == '__main__':
     args = ArgumentParser.parseArgs()
     config = Config(args)
-    caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),
+    caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),  # * unpacks list arguments
                               vfrac=config.vfrac,
                               tfrac=config.tfrac,
                               case_fraction=config.case_fraction)
 
-    # caseManager = CaseManager(cfunc=(lambda: TFT.gen_symvect_dataset(config.layer_sizes[0], count=2000)),
-    #                           vfrac=config.vfrac,
-    #                           tfrac=config.tfrac,
-    #                           case_fraction=config.case_fraction)
-
     nn = NeuralNet(config, caseManager)
     print(nn)
-    #exit(1)
+
+    # cases = caseManager.get_validation_cases()
+    # for c in cases:
+    #     print(c.input)
+    #     print(c.target)
 
     nn.do_training()
 
     nn.do_testing()
-
-    # raw = mnist.load_flat_cases("all_flat_mnist_training_cases")
-    # print(len(raw[0]))
-    # print(len(raw[1]))
-    # images = raw[0]
-    # labels = raw[1]
-    #
-    # S = len(raw[0]) * 0.1
-    # TeF = args.tfrac
-    # VaF = args.vfrac
-    #
-    # training_set_size = round(S * (1 - (TeF + VaF)))
-    # validation_set_size = round(S * VaF)
-    # test_set_size = round(S * TeF)
-    #
-    # print(len(images[0]))
-    # print(images[:1])
-    # print(labels[:1])
-    # labels_one_hot = [to_one_hot_int_1d(10, label) for label in labels[:1000]]
-    # scaled_images = [scale_array(image) for image in images[:1000]]
-    # print(scaled_images[0])
-    # print(labels_one_hot[0])
-    #
-    # nn.do_training(scaled_images, labels_one_hot)
-    #
-    # labels_one_hot = [to_one_hot_int_1d(10, label) for label in labels[11:12]]
-    # scaled_images = [scale_array(image) for image in images[11:12]]
-    #
-    # print(scaled_images)
-    # print(labels_one_hot)
-    # nn.do_testing(scaled_images, labels_one_hot)
+    # vect = [1, 0, 0, 0, 0, 0, 0, 0]
+    # nn.do_testing(caseManager.get_validation_cases()[:10], printResult=True)

@@ -1,1 +1,10 @@
 gen_symvect: -steps 1500 -lr 0.05 -oaf sigmoid -haf tanh -ndim 3 101 50 1 -mbsize 2000
+
+-steps 3000 -lr 0.05 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -case_fraction 1
+
+-steps 10000 -lr 0.03 -oaf sigmoid -haf tanh -ndim 3 8 4 8 -src function tflowtools gen_all_one_hot_cases 8 -tfrac 0.1 -vfrac 0.1
+
+-steps 3000 -lr 1 -oaf sigmoid -haf tanh -ndim 3 10 2 1 -src function tflowtools gen_all_parity_cases 10 False -mbsize 100
+
+-steps 5000 -lr 0.5 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500
+

@@ -6,6 +6,7 @@ import tflowtools as TFT
 import mnist.mnist_basics as mnist
 
 if __name__ == '__main__':
+
     args = ArgumentParser.parseArgs()
     config = Config(args)
 

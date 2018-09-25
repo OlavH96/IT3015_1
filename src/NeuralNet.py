@@ -79,17 +79,18 @@ class NeuralNet:
         for step in range(self.steps):
 
             # For minibatch here
-            for cstart in range(0, number_of_cases, minibatch_size):  # Loop through cases, one minibatch at a time.
-                cend = min(number_of_cases, cstart + minibatch_size)
-                minibatch = case_list[cstart:cend]
+            # for cstart in range(0, number_of_cases, minibatch_size):  # Loop through cases, one minibatch at a time.
+            # cend = min(number_of_cases, cstart + minibatch_size)
+            np.random.shuffle(case_list)  # Select random cases for this minibatch
+            minibatch = case_list[:minibatch_size]
 
-                inputs = [case.input for case in minibatch]
-                targets = [case.target for case in minibatch]
+            inputs = [case.input for case in minibatch]
+            targets = [case.target for case in minibatch]
 
-                m_feeder = {self.input: inputs, self.target: targets}
+            m_feeder = {self.input: inputs, self.target: targets}
 
-                _, res = sess.run([self.trainer, self.error], feed_dict=m_feeder)
-                errors.append((step, res))
+            _, res = sess.run([self.trainer, self.error], feed_dict=m_feeder)
+            errors.append((step, res))
             self.consider_validation_testing(step, sess)
             if step % (self.steps / 10) == 0:
                 print(str((step / self.steps) * 100) + "% done, Cost: " + str(res))
@@ -102,6 +103,7 @@ class NeuralNet:
         print("Final training Error: " + str(errors[-1][1]))
         print("Final validation Error: " + str(self.validation_error_history[-1][1]))
         Plots.scatter([errors, self.validation_error_history], ["Training Error", "Validation Error"])
+        # Plots.line([errors, self.validation_error_history], ["Training Error", "Validation Error"])
 
     def should_run_validation_test(self, step):
 
@@ -118,41 +120,33 @@ class NeuralNet:
             # print(step, ", error=", error)
             self.validation_error_history.append((step, error))
 
-    def do_testing(self, case_list=None, scenario="testing"):
+    def do_testing(self, case_list=None, scenario="testing", printResult=False):
 
-        if scenario == "testing":
+        if scenario == "testing" and not case_list:
             case_list = self.case_manager.get_testing_cases()
 
         inputs = [case.input for case in case_list]
         targets = [case.target for case in case_list]
-        targets_unpacked = [t[0] for t in targets]
-
-        feeder = {self.input: inputs, self.target: targets}
 
         sess = self.sess
 
-        correct_pred = tf.round(self.output)
-        # correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(targets_unpacked, tf.int32), 1)
-        # sess.run(tf.global_variables_initializer())
-        # sum = tf.reduce_sum(tf.equal(correct_pred, targets))
-        res = sess.run(correct_pred, feed_dict=feeder)
-        # print(res)
-        # return ""
+        feeder = {self.input: inputs, self.target: targets}
+       
+        # correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), 1)
+
+        correct_pred = tf.equal(tf.round(self.output), targets)
+        num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
+
+        res = sess.run(num_correct, feed_dict=feeder)
         # TFT.viewprep(sess)
         # TFT.fireup_tensorboard('probeview')
-        correct = 0
-        for i in range(len(case_list)):
-            label = case_list[i].target[0]
-            est = res[i][0]
 
-            if label == est:
-                correct += 1
         if scenario is not "validation":
-            print(correct, " / ", len(case_list), " correct")
-            print((correct / len(case_list)) * 100, " % correct")
-            print(1 - (correct / len(case_list)), " error")
+            print(res, " / ", len(case_list), " correct")
+            print((res / len(case_list)) * 100, " % correct")
+            print(1 - (res / len(case_list)), " error")
 
-        return 1 - (correct / len(case_list))
+        return 1 - (res / len(case_list))
 
     def add_layer(self, layer):
         self.layers.append(layer)

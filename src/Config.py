@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tflowtools as TFT
+import re as regex
 
 
 class Config:
@@ -27,11 +28,10 @@ class Config:
         self.dw = parseDW(self.args.dw)
         self.db = parseDB(self.args.db)
 
-        self.src_function, self.src_args = handleSrc(self.args.src)
+        self.src_function, self.src_args, self.src_file_path = handleSrc(self.args.src)
 
 
 def handleSrc(src):
-
     type = src[0]
 
     if type == "function":
@@ -43,7 +43,18 @@ def handleSrc(src):
 
 
 def handleSrcFile(src):
-    return "NYI"
+    type = src[0]
+    file_path = src[1]
+    module = src[2]
+    function_name = src[3]
+    function_args = src[4:]
+
+    module = __import__(module)  # import the module
+    function = getattr(module, function_name)
+    args = list(map(lambda x: parseArgType(x), function_args))
+
+    return function, args, file_path
+
 
 def handleSrcFunction(src):
     module_name = src[1]
@@ -52,17 +63,28 @@ def handleSrcFunction(src):
 
     module = __import__(module_name)  # import the module
     function = getattr(module, function_name)
-    rest = list(map(lambda x: int(x), function_arguments))
+    args = list(map(lambda x: parseArgType(x), function_arguments))
 
-    function(*rest)  # * unpacks list into arguments for the function
+    function(*args)  # * unpacks list into arguments for the function
 
     print("SRC")
-    print(type)
     print(module_name)
     print(function_name)
     print(function_arguments)
 
-    return function, rest
+    return function, args, None
+
+
+def parseArgType(arg):
+    if regex.match("\d+", arg):
+        return int(arg)
+    elif regex.match("\d+\.\d*", arg):
+        return float(arg)
+    elif regex.match("(True|False)", arg):
+        return True if arg == "True" else False
+    else:
+        return str(arg)
+
 
 def handleNDIM(ndim):
     print(ndim)
