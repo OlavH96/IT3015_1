@@ -8,3 +8,32 @@ gen_symvect: -steps 1500 -lr 0.05 -oaf sigmoid -haf tanh -ndim 3 101 50 1 -mbsiz
 
 -steps 5000 -lr 0.5 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500
 
+adam:
+
+-steps 5000 -lr 0.001 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500 -optimizer adam
+
+adagrad:
+
+-steps 5000 -lr 0.1 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500 -optimizer adagrad
+
+rmsprop
+
+-steps 5000 -lr 0.001 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500 -optimizer rmsprop
+
+cases:
+
+Parity:
+# 93-98% accurate
+-optimizer adam -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 5 1 -src function tflowtools gen_all_parity_cases 10 False
+Symmetry:
+-optimizer adam -steps 10000 -lr 0.0005 -oaf sigmoid -haf sigmoid -ndim 3 101 86 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 300
+-optimizer adam -steps 10000 -lr 0.00033 -oaf sigmoid -haf tanh -ndim 4 101 202 22 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
+-optimizer adam -steps 10000 -lr 0.00033 -oaf sigmoid -haf tanh -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
+# 100% accurate, if lucky
+-optimizer adam -steps 10000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
+Bit Counter:
+
+
+Segment Counter:
+Mnist:
+UC Irvine:

@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tflowtools as TFT
 import re as regex
+import mnist.mnist_basics as mnist
 
 
 class Config:
@@ -27,7 +28,6 @@ class Config:
         self.mdend = parseMDend(self.args.mdend)
         self.dw = parseDW(self.args.dw)
         self.db = parseDB(self.args.db)
-
         self.src_function, self.src_args, self.src_file_path = handleSrc(self.args.src)
 
 
@@ -65,13 +65,7 @@ def handleSrcFunction(src):
     function = getattr(module, function_name)
     args = list(map(lambda x: parseArgType(x), function_arguments))
 
-    function(*args)  # * unpacks list into arguments for the function
-
-    print("SRC")
-    print(module_name)
-    print(function_name)
-    print(function_arguments)
-
+    # function(*args)  # * unpacks list into arguments for the function
     return function, args, None
 
 
@@ -87,7 +81,6 @@ def parseArgType(arg):
 
 
 def handleNDIM(ndim):
-    print(ndim)
 
     if ndim is None:
         return
@@ -127,7 +120,7 @@ def parseOptimizer(optimizer):
         "gradientdescent": tf.train.GradientDescentOptimizer,
         "adam": tf.train.AdamOptimizer,
         "rmsprop": tf.train.RMSPropOptimizer,
-        "adagrad": tf.train.AdagradDAOptimizer
+        "adagrad": tf.train.AdagradOptimizer
     }
     return options[optimizer] or options["gradientdescent"]
 
@@ -142,7 +135,6 @@ def parseIWR(iwr):
         return iwr
     if len(iwr) is not 2:
         raise Exception("IWR length must be 2")
-    print("IWR is " + str(iwr))
     return iwr[0], iwr[1]
 
 
@@ -151,8 +143,11 @@ def parseMDend(mdend):
 
 
 def parseDW(dw):
-    return "NYI"
+    toInt = lambda x: int(x)
+    return [toInt(x) for x in dw]
 
 
 def parseDB(db):
-    return "NYI"
+
+    toInt = lambda x: int(x)
+    return [toInt(x) for x in db]

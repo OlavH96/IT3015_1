@@ -34,7 +34,10 @@ if __name__ == '__main__':
     caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),  # * unpacks list arguments
                               vfrac=config.vfrac,
                               tfrac=config.tfrac,
-                              case_fraction=config.case_fraction)
+                              case_fraction=config.case_fraction,
+                              src_function=config.src_function,
+                              src_args=config.src_args,
+                              src_path=config.src_file_path)
 
     nn = NeuralNet(config, caseManager)
     print(nn)
@@ -47,5 +50,7 @@ if __name__ == '__main__':
     nn.do_training()
 
     nn.do_testing()
+    # TFT.fireup_tensorboard('probeview')
+
     # vect = [1, 0, 0, 0, 0, 0, 0, 0]
     # nn.do_testing(caseManager.get_validation_cases()[:10], printResult=True)

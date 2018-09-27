@@ -2,6 +2,8 @@ from Layer import *
 import math
 from Case import *
 import Plots
+import tflowtools as TFT
+import random
 
 
 class NeuralNet:
@@ -28,12 +30,11 @@ class NeuralNet:
 
         self.training_error_history = []
         self.validation_error_history = []
+        self.grabbed_weigths_history = []
+        self.grabbed_biases_history = []
 
-        print(self.layers)
-        print(self.layer_sizes)
-        print(self.oaf)
-        print(self.haf)
         self.build()
+        self.grabVars = [self.layers[i].weights for i in config.dw] + [self.layers[i].biases for i in config.db]
 
     def build(self):
         tf.reset_default_graph()
@@ -60,49 +61,52 @@ class NeuralNet:
     def configure_training(self):
 
         self.error = self.config.cf(self.target, self.output)
-        self.predictor = self.output  # Simple prediction runs will request the value of output neurons
         optimizer = self.optimizer(self.learning_rate)
         self.trainer = optimizer.minimize(self.error, name='Optimizer')
 
     def do_training(self):
         case_list = self.case_manager.get_training_cases()
         sess = tf.Session()
-        self.sess = sess
         sess.run(tf.global_variables_initializer())
+        self.sess = sess
 
         minibatch_size = self.minibatch_size
         number_of_cases = len(case_list)
         number_of_minibatches = math.ceil(number_of_cases / minibatch_size)
 
         # feeder = {self.input: case_list, self.target: labels}
-        errors = []
+
         for step in range(self.steps):
 
-            # For minibatch here
-            # for cstart in range(0, number_of_cases, minibatch_size):  # Loop through cases, one minibatch at a time.
-            # cend = min(number_of_cases, cstart + minibatch_size)
             np.random.shuffle(case_list)  # Select random cases for this minibatch
-            minibatch = case_list[:minibatch_size]
-
+            minibatch = case_list[:minibatch_size]  # if none, you just get the whole vector, if too large, you also just get the whole vector
             inputs = [case.input for case in minibatch]
             targets = [case.target for case in minibatch]
 
             m_feeder = {self.input: inputs, self.target: targets}
 
-            _, res = sess.run([self.trainer, self.error], feed_dict=m_feeder)
-            errors.append((step, res))
+            _, res, grabbed = sess.run([self.trainer, self.error, self.grabVars],
+                                       feed_dict=m_feeder)
+
+            self.training_error_history.append((step, res))
+            self.grabbed_weigths_history.append(grabbed)
             self.consider_validation_testing(step, sess)
             if step % (self.steps / 10) == 0:
                 print(str((step / self.steps) * 100) + "% done, Cost: " + str(res))
+                print("Validation Error: ", self.validation_error_history[-1][1])
             # Consider validation testing here or something
 
         # TFT.fireup_tensorboard(logdir='probeview')
 
         # Plots.line([errors, self.validation_error_history])
         print("Finished Training")
-        print("Final training Error: " + str(errors[-1][1]))
+        print("Final training Error: " + str(self.training_error_history[-1][1]))
         print("Final validation Error: " + str(self.validation_error_history[-1][1]))
-        Plots.scatter([errors, self.validation_error_history], ["Training Error", "Validation Error"])
+        Plots.scatter([self.training_error_history, self.validation_error_history],
+                      ["Training Error", "Validation Error"])
+        # Plots.plotWeights([self.grabbed_weigths_history])
+        TFT.viewprep(sess)
+
         # Plots.line([errors, self.validation_error_history], ["Training Error", "Validation Error"])
 
     def should_run_validation_test(self, step):
@@ -127,20 +131,25 @@ class NeuralNet:
 
         inputs = [case.input for case in case_list]
         targets = [case.target for case in case_list]
-
+        pred_targets = [t[0] for t in targets]
         sess = self.sess
+        r = random.randint(0, len(targets)-1)
+        # print(inputs[r])
+        # print(targets[r])
 
         feeder = {self.input: inputs, self.target: targets}
-       
-        # correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), 1)
 
-        correct_pred = tf.equal(tf.round(self.output), targets)
-        num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
+        if self.output_layer_size == 1:  # one outout node, special case
 
-        res = sess.run(num_correct, feed_dict=feeder)
-        # TFT.viewprep(sess)
-        # TFT.fireup_tensorboard('probeview')
+            correct_pred = tf.equal(tf.round(self.output), targets)
+            num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
 
+        else:
+            correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), 1)
+            num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
+
+        out, res = sess.run([self.output, num_correct], feed_dict=feeder)
+        # print(out[r])
         if scenario is not "validation":
             print(res, " / ", len(case_list), " correct")
             print((res / len(case_list)) * 100, " % correct")

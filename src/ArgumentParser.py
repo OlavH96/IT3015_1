@@ -28,14 +28,10 @@ def parseArgs():
 
     args = parser.parse_args()
 
-    print("Src")
-    print(args.src)
-
     return args
 
 
 def handleNDIM(ndim):
-    print(ndim)
 
     if ndim is None:
         return

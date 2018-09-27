@@ -28,3 +28,10 @@ def line(data_array, names):
     plt.ylabel("Cost")
     plt.legend()
     plt.show()
+
+def plotWeights(weights):
+
+    print(weights)
+
+    plt.imshow(weights[-1])
+    plt.show()

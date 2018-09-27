@@ -1,7 +1,6 @@
 import numpy as np
 from Case import *
 
-
 def unpack(array):
     if type(array) is not list: return [array]  # pack into array
 
@@ -12,16 +11,23 @@ def unpack(array):
 
 class CaseManager:
 
-    def __init__(self, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1, case_fraction=1):
+    def __init__(self, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1, case_fraction=1,
+                 src_function = None,
+                 src_args = None,
+                 src_path=None):
         self.casefunc = cfunc
         self.case_fraction = case_fraction
         self.validation_fraction = vfrac
         self.test_fraction = tfrac
         self.training_fraction = 1 - (vfrac + tfrac)
         self.labels = labels
+        self.src_path = src_path
         if cases:
             print("has cases")
             self.cases = cases
+        elif src_path:  # has file to read
+            res = src_function(*src_args, src_path)
+            print(res)
         else:
             print("Generating cases")
             self.generate_cases()
