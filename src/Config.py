@@ -139,8 +139,8 @@ def parseIWR(iwr):
 
 
 def parseMDend(mdend):
-    return "NYI"
-
+    toInt = lambda x: int(x)
+    return [toInt(x) for x in mdend]
 
 def parseDW(dw):
     toInt = lambda x: int(x)

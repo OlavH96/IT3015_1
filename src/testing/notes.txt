@@ -8,6 +8,9 @@ gen_symvect: -steps 1500 -lr 0.05 -oaf sigmoid -haf tanh -ndim 3 101 50 1 -mbsiz
 
 -steps 5000 -lr 0.5 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500
 
+graphs:
+-optimizer adam -steps 2000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50 -mbsize 1 -dw 0 1 2 -db 0 1 2 -mdend 0 1 2
+
 adam:
 
 -steps 5000 -lr 0.001 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500 -optimizer adam

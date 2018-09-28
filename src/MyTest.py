@@ -29,6 +29,12 @@ def scale_array(array):
 
 
 if __name__ == '__main__':
+
+
+    # TFT.dendrogram([ [0.5, 0.4, 1.2], [0.3, 0.1, 0.8] ] , ['00','01'] )
+    # exit(1)
+
+
     args = ArgumentParser.parseArgs()
     config = Config(args)
     caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),  # * unpacks list arguments
@@ -49,7 +55,7 @@ if __name__ == '__main__':
 
     nn.do_training()
 
-    nn.do_testing()
+    # nn.do_testing()
     # TFT.fireup_tensorboard('probeview')
 
     # vect = [1, 0, 0, 0, 0, 0, 0, 0]

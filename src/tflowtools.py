@@ -472,7 +472,46 @@ def hinton_plot(matrix, maxval=None, maxsize=1, fig=None, trans=True, scale=True
         axes.add_patch(blob)
     axes.autoscale_view()
     PLT.draw()
+
     PLT.pause(.001)
+
+
+def hinton(matrix, title, max_weight=None, ax=None):
+    """Draw Hinton diagram for visualizing a weight matrix."""
+    ax = ax if ax is not None else PLT.gca()
+
+    if not max_weight:
+        max_weight = 2 ** np.ceil(np.log(np.abs(matrix).max()) / np.log(2))
+    ax.set_title(title)
+    ax.patch.set_facecolor('gray')
+    ax.set_aspect('equal', 'box')
+    ax.xaxis.set_major_locator(PLT.NullLocator())
+    ax.yaxis.set_major_locator(PLT.NullLocator())
+    font = {'family': 'serif',
+            'color': 'darkred',
+            'weight': 'normal',
+            'size': 16,
+            }
+    for (x, y), w in np.ndenumerate(matrix):
+        color = 'white' if w > 0 else 'black'
+        size = np.sqrt(np.abs(w) / max_weight)
+        xy = [x - size / 2, y - size / 2]
+        rect = PLT.Rectangle(xy, size, size,
+                             facecolor=color, edgecolor=color)
+        ax.add_patch(rect)
+    ax.autoscale_view()
+    ax.invert_yaxis()
+    PLT.show()
+
+
+def arrayPlot(array, title):
+    print("ArrayPlot")
+    print(array)
+    print(len(array))
+    print(len(array[0]))
+    PLT.imshow(array)
+    PLT.title(title)
+    PLT.show()
 
 
 # This graphically displays a matrix with color codes for positive, negative, small positive and small negative,

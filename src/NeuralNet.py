@@ -4,6 +4,7 @@ from Case import *
 import Plots
 import tflowtools as TFT
 import random
+import matplotlib.pyplot as plt
 
 
 class NeuralNet:
@@ -33,8 +34,13 @@ class NeuralNet:
         self.grabbed_weigths_history = []
         self.grabbed_biases_history = []
 
+        self.grabvars = []
+        self.grabvar_figures = []
         self.build()
-        self.grabVars = [self.layers[i].weights for i in config.dw] + [self.layers[i].biases for i in config.db]
+
+    def add_grabvar(self, var):
+        self.grabvars.append(var)
+        self.grabvar_figures.append(plt.figure())
 
     def build(self):
         tf.reset_default_graph()
@@ -45,17 +51,31 @@ class NeuralNet:
         input_size = self.input_layer_size
 
         for i, outsize in enumerate(self.layer_sizes[1:]):
+            print("Constructing layer: " + str(i) + ", insize= " + str(input_size) + ", outsize=" + str(outsize))
             layer = Layer(net=self, index=i, input=invar, input_size=input_size, output_size=outsize,
                           activation_function=self.oaf if i is self.number_of_layers - 2 else self.haf,
                           iwr_lower_bound=self.config.iwr_lower_bound, iwr_upper_bound=self.config.iwr_upper_bound)
             invar = layer.output
             input_size = layer.output_size
 
-        self.output = layer.output  # Output of last module is output of whole network
+            # Process grabvars
+            w = layer.weights
+            b = layer.biases
+            o = layer.output
 
+            if i in self.config.dw:
+                self.add_grabvar(w)
+
+            if i in self.config.db:
+                self.add_grabvar(b)
+
+            if i in self.config.mdend:
+                self.add_grabvar(o)
+
+        self.output = layer.output  # Output of last module is output of whole network
         self.target = tf.placeholder(dtype=tf.float64, shape=[None, self.output_layer_size],
                                      name='output_layer')  # Image data
-
+        self.grabvars.sort(key=lambda x: x.name)
         self.configure_training()
 
     def configure_training(self):
@@ -65,6 +85,7 @@ class NeuralNet:
         self.trainer = optimizer.minimize(self.error, name='Optimizer')
 
     def do_training(self):
+        print(self.grabvars)
         case_list = self.case_manager.get_training_cases()
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
@@ -79,17 +100,17 @@ class NeuralNet:
         for step in range(self.steps):
 
             np.random.shuffle(case_list)  # Select random cases for this minibatch
-            minibatch = case_list[:minibatch_size]  # if none, you just get the whole vector, if too large, you also just get the whole vector
+            minibatch = case_list[
+                        :minibatch_size]  # if none, you just get the whole vector, if too large, you also just get the whole vector
             inputs = [case.input for case in minibatch]
             targets = [case.target for case in minibatch]
 
             m_feeder = {self.input: inputs, self.target: targets}
-
-            _, res, grabbed = sess.run([self.trainer, self.error, self.grabVars],
+            toRun = [self.trainer, self.error] + self.grabvars
+            _, res = sess.run([self.trainer, self.error],
                                        feed_dict=m_feeder)
 
             self.training_error_history.append((step, res))
-            self.grabbed_weigths_history.append(grabbed)
             self.consider_validation_testing(step, sess)
             if step % (self.steps / 10) == 0:
                 print(str((step / self.steps) * 100) + "% done, Cost: " + str(res))
@@ -99,15 +120,25 @@ class NeuralNet:
         # TFT.fireup_tensorboard(logdir='probeview')
 
         # Plots.line([errors, self.validation_error_history])
-        print("Finished Training")
-        print("Final training Error: " + str(self.training_error_history[-1][1]))
-        print("Final validation Error: " + str(self.validation_error_history[-1][1]))
-        Plots.scatter([self.training_error_history, self.validation_error_history],
-                      ["Training Error", "Validation Error"])
+        print("\nFinished Training")
+        print("Training Error: " + str(self.training_error_history[-1][1]))
+        print("Training Error %: " + str(self.training_error_history[-1][1] * 100)+" %")
+        print("Validation Error: " + str(self.validation_error_history[-1][1]))
+        print("Validation Error %: " + str(self.validation_error_history[-1][1]*100) + "%")
+        # Plots.scatter([self.training_error_history, self.validation_error_history],
+        #            ["Training Error", "Validation Error"])
+
         # Plots.plotWeights([self.grabbed_weigths_history])
         TFT.viewprep(sess)
 
-        # Plots.line([errors, self.validation_error_history], ["Training Error", "Validation Error"])
+        Plots.line([self.training_error_history, self.validation_error_history], ["Training Error", "Validation Error"])
+
+        if self.config.mbsize > 0:  # Should run map test
+            print("\nRunning Map Tests")
+            map_batch_size = self.config.mbsize
+            np.random.shuffle(case_list)  # Select random cases for this minibatch
+            cases = case_list[:map_batch_size]
+            self.do_testing(cases, grabvars=self.grabvars)
 
     def should_run_validation_test(self, step):
 
@@ -124,7 +155,7 @@ class NeuralNet:
             # print(step, ", error=", error)
             self.validation_error_history.append((step, error))
 
-    def do_testing(self, case_list=None, scenario="testing", printResult=False):
+    def do_testing(self, case_list=None, scenario="testing", grabvars=[]):
 
         if scenario == "testing" and not case_list:
             case_list = self.case_manager.get_testing_cases()
@@ -133,7 +164,7 @@ class NeuralNet:
         targets = [case.target for case in case_list]
         pred_targets = [t[0] for t in targets]
         sess = self.sess
-        r = random.randint(0, len(targets)-1)
+        r = random.randint(0, len(targets) - 1)
         # print(inputs[r])
         # print(targets[r])
 
@@ -147,15 +178,35 @@ class NeuralNet:
         else:
             correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), 1)
             num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
-
-        out, res = sess.run([self.output, num_correct], feed_dict=feeder)
-        # print(out[r])
+        toRun = [self.output, num_correct] + grabvars
+        results = sess.run(toRun, feed_dict=feeder)
+        res = results[1]
+        grabbed = results[2:]
         if scenario is not "validation":
+            print("Results for scenario %s :", (scenario))
             print(res, " / ", len(case_list), " correct")
             print((res / len(case_list)) * 100, " % correct")
             print(1 - (res / len(case_list)), " error")
+            names = [str(c) if len(c) < 4 else (str(c[0])+"..."+str(c[-1])) for c in inputs]
+            self.display_grabvars(grabbed, grabvars, names)
 
         return 1 - (res / len(case_list))
+
+    def display_grabvars(self, grabbed_vals, grabbed_vars, inputs):
+        names = [x.name for x in grabbed_vars]
+        print("\n" + "Grabbed Variables", end="\n")
+        for i, v in enumerate(grabbed_vals):
+            if names: print("   " + names[i] + " = ", end="\n")
+
+            print(v, end="\n\n")
+            if type(v) == np.ndarray and len(v.shape) > 1:  # If v is a matrix, use hinton plotting
+                TFT.hinton(v, names[i])
+                if "out" in names[i]:
+                    self.display_dendrogram(v, inputs, names[i])
+
+    def display_dendrogram(self, vals, inputs, title):
+        print()
+        TFT.dendrogram(vals, inputs, title=title)
 
     def add_layer(self, layer):
         self.layers.append(layer)
