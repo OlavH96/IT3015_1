@@ -25,7 +25,7 @@ class NeuralNet:
         self.optimizer = config.optimizer
         self.steps = config.steps
 
-        self.iwr_lower_bound, self.iwr_upper_bound = config.iwr_lower_bound, config.iwr_upper_bound
+        self.iwr_function = config.iwr_function
 
         self.minibatch_size = config.msize
 
@@ -51,10 +51,15 @@ class NeuralNet:
         input_size = self.input_layer_size
 
         for i, outsize in enumerate(self.layer_sizes[1:]):
-            print("Constructing layer: " + str(i) + ", insize= " + str(input_size) + ", outsize=" + str(outsize))
+            iwr = self.iwr_function(outsize)
+            print("Constructing layer: " + str(i) + ", insize= " + str(input_size) + ", outsize=" + str(
+                outsize) + ", iwr=" + str(iwr))
+            iwr_l = iwr[0]
+            iwr_u = iwr[1]
+
             layer = Layer(net=self, index=i, input=invar, input_size=input_size, output_size=outsize,
                           activation_function=self.oaf if i is self.number_of_layers - 2 else self.haf,
-                          iwr_lower_bound=self.config.iwr_lower_bound, iwr_upper_bound=self.config.iwr_upper_bound)
+                          iwr_lower_bound=iwr_l, iwr_upper_bound=iwr_u)
             invar = layer.output
             input_size = layer.output_size
 
@@ -70,6 +75,8 @@ class NeuralNet:
                 self.add_grabvar(b)
 
             if i in self.config.mdend:
+                self.add_grabvar(o)
+            if i in self.config.map_layers and i not in self.config.mdend:
                 self.add_grabvar(o)
 
         self.output = layer.output  # Output of last module is output of whole network
@@ -108,7 +115,7 @@ class NeuralNet:
             m_feeder = {self.input: inputs, self.target: targets}
             toRun = [self.trainer, self.error] + self.grabvars
             _, res = sess.run([self.trainer, self.error],
-                                       feed_dict=m_feeder)
+                              feed_dict=m_feeder)
 
             self.training_error_history.append((step, res))
             self.consider_validation_testing(step, sess)
@@ -122,9 +129,9 @@ class NeuralNet:
         # Plots.line([errors, self.validation_error_history])
         print("\nFinished Training")
         print("Training Error: " + str(self.training_error_history[-1][1]))
-        print("Training Error %: " + str(self.training_error_history[-1][1] * 100)+" %")
+        print("Training Error %: " + str(self.training_error_history[-1][1] * 100) + " %")
         print("Validation Error: " + str(self.validation_error_history[-1][1]))
-        print("Validation Error %: " + str(self.validation_error_history[-1][1]*100) + "%")
+        print("Validation Error %: " + str(self.validation_error_history[-1][1] * 100) + "%")
         # Plots.scatter([self.training_error_history, self.validation_error_history],
         #            ["Training Error", "Validation Error"])
 
@@ -157,16 +164,17 @@ class NeuralNet:
 
     def do_testing(self, case_list=None, scenario="testing", grabvars=[]):
 
+        if not grabvars: grabvars = self.grabvars
+
         if scenario == "testing" and not case_list:
             case_list = self.case_manager.get_testing_cases()
+        # print(case_list[0].input)
+        # print(case_list[0].target)
 
         inputs = [case.input for case in case_list]
         targets = [case.target for case in case_list]
-        pred_targets = [t[0] for t in targets]
+        pred_targets = [t[0] if len(t) == 1 else TFT.one_hot_to_int(t) for t in targets]
         sess = self.sess
-        r = random.randint(0, len(targets) - 1)
-        # print(inputs[r])
-        # print(targets[r])
 
         feeder = {self.input: inputs, self.target: targets}
 
@@ -183,11 +191,12 @@ class NeuralNet:
         res = results[1]
         grabbed = results[2:]
         if scenario is not "validation":
-            print("Results for scenario %s :", (scenario))
+            print("Results for scenario: ", scenario)
             print(res, " / ", len(case_list), " correct")
             print((res / len(case_list)) * 100, " % correct")
             print(1 - (res / len(case_list)), " error")
-            names = [str(c) if len(c) < 4 else (str(c[0])+"..."+str(c[-1])) for c in inputs]
+            names = [str(c) if len(c) < 4 else str(c[0]) + str(c[1]) + ".." + str(c[-2]) + str(c[-1]) + str(
+                targets[inputs.index(c)]) if not self.config.one_hot_output else str(TFT.one_hot_to_int(targets[inputs.index(c)])) for c in inputs]
             self.display_grabvars(grabbed, grabvars, names)
 
         return 1 - (res / len(case_list))
@@ -195,6 +204,7 @@ class NeuralNet:
     def display_grabvars(self, grabbed_vals, grabbed_vars, inputs):
         names = [x.name for x in grabbed_vars]
         print("\n" + "Grabbed Variables", end="\n")
+        print(names)
         for i, v in enumerate(grabbed_vals):
             if names: print("   " + names[i] + " = ", end="\n")
 
@@ -205,8 +215,7 @@ class NeuralNet:
                     self.display_dendrogram(v, inputs, names[i])
 
     def display_dendrogram(self, vals, inputs, title):
-        print()
-        TFT.dendrogram(vals, inputs, title=title)
+        TFT.dendrogram(vals, inputs, title="Dendrogram: " + title)
 
     def add_layer(self, layer):
         self.layers.append(layer)

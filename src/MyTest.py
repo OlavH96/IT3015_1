@@ -37,7 +37,8 @@ if __name__ == '__main__':
 
     args = ArgumentParser.parseArgs()
     config = Config(args)
-    caseManager = CaseManager(cfunc=lambda: config.src_function(*config.src_args),  # * unpacks list arguments
+    caseManager = CaseManager(config,
+                              cfunc=lambda: config.src_function(*config.src_args),  # * unpacks list arguments
                               vfrac=config.vfrac,
                               tfrac=config.tfrac,
                               case_fraction=config.case_fraction,

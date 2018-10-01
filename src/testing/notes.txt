@@ -28,15 +28,19 @@ cases:
 Parity:
 # 93-98% accurate
 -optimizer adam -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 5 1 -src function tflowtools gen_all_parity_cases 10 False
+-optimizer adam -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 5 1 -src function tflowtools gen_all_parity_cases 10 False -mbsize 10 -dw 0 1 -db 0 1 -mdend 1
 Symmetry:
 -optimizer adam -steps 10000 -lr 0.0005 -oaf sigmoid -haf sigmoid -ndim 3 101 86 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 300
 -optimizer adam -steps 10000 -lr 0.00033 -oaf sigmoid -haf tanh -ndim 4 101 202 22 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
 -optimizer adam -steps 10000 -lr 0.00033 -oaf sigmoid -haf tanh -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
 # 100% accurate, if lucky
 -optimizer adam -steps 10000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
+-optimizer adam -steps 2000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50 -mbsize 10 -dw 0 1 2 -db 0 1 2 -mdend 2
 Bit Counter:
 
-
 Segment Counter:
+
 Mnist:
+-optimizer adam -haf relu -oaf sigmoid -lr 0.001 -steps 1000 -ndim 3 784 500 10 -src function mnist.mnist_basics load_all_flat_cases training ./mnist/ True -case_fraction 0.1 -scale_input 0 255 -one_hot_output True 10 -map_layers 1 -mbsize 10 -mdend 1
+
 UC Irvine:

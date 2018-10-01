@@ -1,20 +1,28 @@
+import os
+
 import tensorflow as tf
 import tflowtools as TFT
 import re as regex
 import mnist.mnist_basics as mnist
+import math
+import importlib
 
 
 class Config:
+    def __string_array_to_type(self, array, type):
+        to = lambda x: type(x)
+        return [to(x) for x in array]
+
     def __init__(self, args):
         self.args = args
-        print(args)
 
         (self.number_of_layers, self.layer_sizes) = handleNDIM(self.args.ndim)
         self.haf = parseHAF(self.args.haf)
         self.oaf = parseOAF(self.args.oaf)
         self.cf = parseCF(self.args.cf)
         self.lr = self.args.lr
-        self.iwr_lower_bound, self.iwr_upper_bound = parseIWR(self.args.iwr)
+        self.iwr_function = parseIWR(self.args.iwr)
+        # self.iwr_lower_bound, self.iwr_upper_bound = parseIWR(self.args.iwr)
         self.optimizer = parseOptimizer(self.args.optimizer)
         self.src = self.args.src
         self.case_fraction = self.args.case_fraction
@@ -29,7 +37,9 @@ class Config:
         self.dw = parseDW(self.args.dw)
         self.db = parseDB(self.args.db)
         self.src_function, self.src_args, self.src_file_path = handleSrc(self.args.src)
+        self.one_hot_output = [parseArgType(x) for x in self.args.one_hot_output]
 
+        self.scale_input = self.__string_array_to_type(self.args.scale_input, float)
 
 def handleSrc(src):
     type = src[0]
@@ -61,7 +71,8 @@ def handleSrcFunction(src):
     function_name = src[2]
     function_arguments = src[3:]
 
-    module = __import__(module_name)  # import the module
+    module = importlib.import_module(module_name)
+
     function = getattr(module, function_name)
     args = list(map(lambda x: parseArgType(x), function_arguments))
 
@@ -81,7 +92,6 @@ def parseArgType(arg):
 
 
 def handleNDIM(ndim):
-
     if ndim is None:
         return
     dim = ndim[0]
@@ -125,22 +135,21 @@ def parseOptimizer(optimizer):
     return options[optimizer] or options["gradientdescent"]
 
 
-def parseMapLayers(map_layers):
-    return "NYI"
-
-
 def parseIWR(iwr):
-    if isinstance(iwr, str):
-        print("IWR is a string, panic!")
-        return iwr
-    if len(iwr) is not 2:
-        raise Exception("IWR length must be 2")
-    return iwr[0], iwr[1]
+    if len(iwr) == 2:
+
+        return lambda nodes: [float(iwr[0]), float(iwr[1])]
+    elif len(iwr) == 1 and iwr[0] == "scaled":
+
+        return lambda nodes: [-(1 / math.sqrt(nodes)), (1 / math.sqrt(nodes))]
+
+    raise Exception("IWR length must be 2, or the word 'scaled'")
 
 
 def parseMDend(mdend):
     toInt = lambda x: int(x)
     return [toInt(x) for x in mdend]
+
 
 def parseDW(dw):
     toInt = lambda x: int(x)
@@ -148,6 +157,10 @@ def parseDW(dw):
 
 
 def parseDB(db):
-
     toInt = lambda x: int(x)
     return [toInt(x) for x in db]
+
+
+def parseMapLayers(map_layers):
+    toInt = lambda x: int(x)
+    return [toInt(x) for x in map_layers]

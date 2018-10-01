@@ -11,7 +11,7 @@ def parseArgs():
                         choices=["sigmoid", "tanh", "elu", "softmax","softplus", "softsign", "relu", "relu6", "crelu", "relu_x"])
     parser.add_argument('-cf', dest='cf', help='Cost Function', default="mse", choices=["mse", "ce"])
     parser.add_argument('-lr', dest='lr', help='Learning Rate', type=float, default=0.01)
-    parser.add_argument('-iwr', dest='iwr', type=float, nargs="*", help='Initial Weight Range', default=[-0.1, 0.1])
+    parser.add_argument('-iwr', dest='iwr', nargs="*", help='Initial Weight Range', default=[-0.1, 0.1])
     parser.add_argument('-optimizer', dest='optimizer', help='Optimizer', type=str, default="gradientdescent", choices=["gradientdescent", "adam", "rmsprop","adagrad"])
     parser.add_argument('-src', dest='src', help='Data Source: File or tflowtools function call with args.', type=str, nargs="*")
     parser.add_argument('-case_fraction', dest='case_fraction', help='Case Fraction', type=float, default=1)
@@ -21,10 +21,12 @@ def parseArgs():
     parser.add_argument('-msize', dest='msize', help='Minibatch Size', type=int, default=100)
     parser.add_argument('-mbsize', dest='mbsize', help='Map Batch Size', type=int, default=0)
     parser.add_argument('-steps', dest='steps', help='Minibatch Steps', type=int, default=100)
-    parser.add_argument('-map_layers', dest='map_layers', help='Map Layers', type=int, default=0)
+    parser.add_argument('-map_layers', dest='map_layers', help='Map Layers', nargs="*", default=[])
     parser.add_argument('-mdend', dest='mdend', help='Map Dendrograms', nargs="*" , default=[])
     parser.add_argument('-dw', dest='dw', help='Display Weights', nargs="*" , default=[])
     parser.add_argument('-db', dest='db', help='Display Biases', nargs="*" , default=[])
+    parser.add_argument('-scale_input', dest='scale_input', help='Input Scales, min and max', nargs=2 , default=[])
+    parser.add_argument('-one_hot_output', dest='one_hot_output', help='Output should be one_hot (bool), then the size(int)', nargs="*" , default=[])
 
     args = parser.parse_args()
 
