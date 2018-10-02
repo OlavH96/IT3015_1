@@ -23,12 +23,17 @@ rmsprop
 
 -steps 5000 -lr 0.001 -oaf sigmoid -haf tanh -ndim 3 101 40 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 500 -optimizer rmsprop
 
+cross entropy
+-cf ce -optimizer adam -steps 3000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50 -mbsize 10 -mdend 2
+
 cases:
 
 Parity:
 # 93-98% accurate
 -optimizer adam -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 5 1 -src function tflowtools gen_all_parity_cases 10 False
 -optimizer adam -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 5 1 -src function tflowtools gen_all_parity_cases 10 False -mbsize 10 -dw 0 1 -db 0 1 -mdend 1
+-optimizer rmsprop -steps 10000 -lr 0.01 -oaf sigmoid -haf tanh -ndim 3 10 9 1 -src function tflowtools gen_all_parity_cases 10 False -mbsize 10 -mdend 1
+
 Symmetry:
 -optimizer adam -steps 10000 -lr 0.0005 -oaf sigmoid -haf sigmoid -ndim 3 101 86 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 300
 -optimizer adam -steps 10000 -lr 0.00033 -oaf sigmoid -haf tanh -ndim 4 101 202 22 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
@@ -36,11 +41,29 @@ Symmetry:
 # 100% accurate, if lucky
 -optimizer adam -steps 10000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50
 -optimizer adam -steps 2000 -lr 0.0003 -oaf sigmoid -haf relu -ndim 4 101 202 4 1 -src function tflowtools gen_symvect_dataset 101 2000 -msize 50 -mbsize 10 -dw 0 1 2 -db 0 1 2 -mdend 2
+
 Bit Counter:
-
+-src function tflowtools gen_vector_count_cases 500 15 -ndim 3 15 32 16 -lr 0.1 -steps 1000 -oaf softmax -haf tanh -mbsize 10 -mdend 1
+# Bra training error
+-src function tflowtools gen_vector_count_cases 500 15 -ndim 3 15 32 16 -optimizer adam -lr 0.001 -steps 3000 -oaf sigmoid -haf tanh -mbsize 10 -mdend 1
 Segment Counter:
-
+-optimizer rmsprop -steps 5000 -lr 0.03 -oaf softmax -haf tanh -ndim 3 25 50 9 -src function tflowtools gen_segmented_vector_cases 25 1000 0 8 -mbsize 10 -mdend 1
 Mnist:
 -optimizer adam -haf relu -oaf sigmoid -lr 0.001 -steps 1000 -ndim 3 784 500 10 -src function mnist.mnist_basics load_all_flat_cases training ./mnist/ True -case_fraction 0.1 -scale_input 0 255 -one_hot_output True 10 -map_layers 1 -mbsize 10 -mdend 1
 
 UC Irvine:
+
+wine
+-src file ./uc/winequality_red.txt CSVReader read ./uc/winequality_red.txt ; -ndim 3 11 10 12 -steps 5000 -one_hot_output True 12 -mbsize 10 -mdend 1 2
+glass
+-src file ./uc/glass.txt CSVReader read ./uc/glass.txt , -ndim 3 9 10 8 -steps 5000 -one_hot_output True 8 -mbsize 10 -mdend 1 2
+yeast
+-src file ./uc/yeast.txt CSVReader read ./uc/yeast.txt , -ndim 3 8 10 11 -steps 5000 -one_hot_output True 11 -mbsize 10 -mdend 1
+
+hacker's choice - Absenteeism at work
+
+-src file ./uc/absent.txt CSVReader read ./uc/absent.txt ; -ndim 3 20 10 121 -steps 5000 -one_hot_output True 121 -mbsize 10 -mdend 1
+
+Detailed Explanation
+
+-iwr scaled -optimizer adam -steps 500 -lr 0.03 -oaf relu -haf tanh -ndim 3 3 2 1 -src function tflowtools gen_symvect_dataset 3 1000 -mbsize 10 -dw 0 1 -db 0 1 -mdend 0 1

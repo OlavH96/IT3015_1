@@ -6,6 +6,9 @@ import tflowtools as TFT
 import random
 import matplotlib.pyplot as plt
 
+def is_one_hot(array):
+
+    return len(list(filter(lambda x: x==1, array))) == 1
 
 class NeuralNet:
 
@@ -102,8 +105,6 @@ class NeuralNet:
         number_of_cases = len(case_list)
         number_of_minibatches = math.ceil(number_of_cases / minibatch_size)
 
-        # feeder = {self.input: case_list, self.target: labels}
-
         for step in range(self.steps):
 
             np.random.shuffle(case_list)  # Select random cases for this minibatch
@@ -111,7 +112,8 @@ class NeuralNet:
                         :minibatch_size]  # if none, you just get the whole vector, if too large, you also just get the whole vector
             inputs = [case.input for case in minibatch]
             targets = [case.target for case in minibatch]
-
+            # print(inputs)
+            # print(targets)
             m_feeder = {self.input: inputs, self.target: targets}
             toRun = [self.trainer, self.error] + self.grabvars
             _, res = sess.run([self.trainer, self.error],
@@ -128,7 +130,7 @@ class NeuralNet:
 
         # Plots.line([errors, self.validation_error_history])
         print("\nFinished Training")
-        print("Training Error: " + str(self.training_error_history[-1][1]))
+        print("Training Cost: " + str(self.training_error_history[-1][1]))
         print("Training Error %: " + str(self.training_error_history[-1][1] * 100) + " %")
         print("Validation Error: " + str(self.validation_error_history[-1][1]))
         print("Validation Error %: " + str(self.validation_error_history[-1][1] * 100) + "%")
@@ -138,7 +140,7 @@ class NeuralNet:
         # Plots.plotWeights([self.grabbed_weigths_history])
         TFT.viewprep(sess)
 
-        Plots.line([self.training_error_history, self.validation_error_history], ["Training Error", "Validation Error"])
+        Plots.line([self.training_error_history, self.validation_error_history], ["Training Cost", "Validation Error"])
 
         if self.config.mbsize > 0:  # Should run map test
             print("\nRunning Map Tests")
@@ -195,9 +197,12 @@ class NeuralNet:
             print(res, " / ", len(case_list), " correct")
             print((res / len(case_list)) * 100, " % correct")
             print(1 - (res / len(case_list)), " error")
-            names = [str(c) if len(c) < 4 else str(c[0]) + str(c[1]) + ".." + str(c[-2]) + str(c[-1]) + str(
-                targets[inputs.index(c)]) if not self.config.one_hot_output else str(TFT.one_hot_to_int(targets[inputs.index(c)])) for c in inputs]
-            self.display_grabvars(grabbed, grabvars, names)
+
+            names = [str(c) if len(c) < 5 else str(c[0]) + str(c[1]) + ".." + str(c[-2]) + (str(c[-1])) for c in inputs]
+            targets = [str(t) if type(t) is list else ("["+str(t)+"]") if len(t) == 1 else "["+str(TFT.one_hot_to_int(t))+"]" for t in targets]
+
+            combined = [name+target for name, target in zip(names, targets)]
+            self.display_grabvars(grabbed, grabvars, combined)
 
         return 1 - (res / len(case_list))
 

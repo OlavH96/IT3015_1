@@ -55,11 +55,11 @@ def handleSrc(src):
 def handleSrcFile(src):
     type = src[0]
     file_path = src[1]
-    module = src[2]
+    module_name = src[2]
     function_name = src[3]
     function_args = src[4:]
 
-    module = __import__(module)  # import the module
+    module = importlib.import_module(module_name)
     function = getattr(module, function_name)
     args = list(map(lambda x: parseArgType(x), function_args))
 
@@ -81,9 +81,9 @@ def handleSrcFunction(src):
 
 
 def parseArgType(arg):
-    if regex.match("\d+", arg):
+    if regex.match("^\d+$", arg):
         return int(arg)
-    elif regex.match("\d+\.\d*", arg):
+    elif regex.match("^\d+\.\d*$", arg):
         return float(arg)
     elif regex.match("(True|False)", arg):
         return True if arg == "True" else False

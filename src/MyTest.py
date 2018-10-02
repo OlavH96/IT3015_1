@@ -8,6 +8,7 @@ import testing.DataLoader as DataLoader
 import numpy as np
 import mnist.mnist_basics as mnist
 from Case import *
+import CSVReader
 
 
 def to_one_hot_int_1d(length, number):
@@ -30,11 +31,11 @@ def scale_array(array):
 
 if __name__ == '__main__':
 
+    # print(CSVReader.read("./uc/winequality_red.txt", ";"))
+    # print(CSVReader.read("./uc/glass.txt", ","))
+    # print(CSVReader.read("./uc/yeast.txt", ","))
 
-    # TFT.dendrogram([ [0.5, 0.4, 1.2], [0.3, 0.1, 0.8] ] , ['00','01'] )
     # exit(1)
-
-
     args = ArgumentParser.parseArgs()
     config = Config(args)
     caseManager = CaseManager(config,

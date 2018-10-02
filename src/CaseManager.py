@@ -5,7 +5,7 @@ import tflowtools as tft
 
 def unpack(array):
     if type(array) is not list: return [array]  # pack into array
-
+    # if type(array) is list:
     if type(array) is list and type(array[0]) is not list:  # is a single array
         return array
     return unpack(array[0])  # unpack to single array
@@ -39,18 +39,18 @@ class CaseManager:
         self.labels = labels
         self.src_path = src_path
         if cases:
-            print("has cases")
             self.cases = cases
         elif src_path:  # has file to read
-            res = src_function(*src_args, src_path)
-            print(res)
+            print(src_function)
+            print(src_args)
+            self.cases = src_function(*src_args)
         else:
             print("Generating cases")
             self.generate_cases()
 
         self.organize_cases()
-        print(len(self.cases))
-
+        print(self.training_cases[0].input)
+        print(self.training_cases[0].target)
     def generate_cases(self):
         self.cases = self.casefunc()  # Run the case generator.  Case = [input-vector, target-vector]
 
@@ -91,8 +91,9 @@ class CaseManager:
 
     def createCases(self, list):
         if self.config.one_hot_output and self.config.one_hot_output[0]:
+
             return [Case(input=unpack(case[:-1]),
-                         target=unpack(tft.int_to_one_hot(case[-1], size=self.config.one_hot_output[-1]))) for case in
+                         target=unpack(tft.int_to_one_hot(int(case[-1]), size=self.config.one_hot_output[-1]))) for case in
                     list]
         else:
             return [Case(input=unpack(case[:-1]), target=unpack(case[-1])) for case in list]
