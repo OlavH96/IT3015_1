@@ -29,8 +29,8 @@ def line(data_array, names):
     plt.legend()
     plt.show()
 
-def plotWeights(weights):
 
+def plotWeights(weights):
     print(weights)
 
     plt.imshow(weights[-1])

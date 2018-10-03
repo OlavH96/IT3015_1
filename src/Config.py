@@ -39,7 +39,9 @@ class Config:
         self.src_function, self.src_args, self.src_file_path = handleSrc(self.args.src)
         self.one_hot_output = [parseArgType(x) for x in self.args.one_hot_output]
 
-        self.scale_input = self.__string_array_to_type(self.args.scale_input, float)
+        self.scale_input = [parseArgType(x) for x in self.args.scale_input]
+        self.topk = self.args.topk
+
 
 def handleSrc(src):
     type = src[0]

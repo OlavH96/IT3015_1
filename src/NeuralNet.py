@@ -6,9 +6,10 @@ import tflowtools as TFT
 import random
 import matplotlib.pyplot as plt
 
-def is_one_hot(array):
 
-    return len(list(filter(lambda x: x==1, array))) == 1
+def is_one_hot(array):
+    return len(list(filter(lambda x: x == 1, array))) == 1
+
 
 class NeuralNet:
 
@@ -142,12 +143,17 @@ class NeuralNet:
 
         Plots.line([self.training_error_history, self.validation_error_history], ["Training Cost", "Validation Error"])
 
+        print("\nResults for Training Set")
+        self.do_testing(self.case_manager.get_training_cases())
+        print("\nResults for Testing Set")
+        self.do_testing(self.case_manager.get_testing_cases())
+
         if self.config.mbsize > 0:  # Should run map test
             print("\nRunning Map Tests")
             map_batch_size = self.config.mbsize
             np.random.shuffle(case_list)  # Select random cases for this minibatch
             cases = case_list[:map_batch_size]
-            self.do_testing(cases, grabvars=self.grabvars)
+            self.do_testing(cases, grabvars=self.grabvars, scenario="mapping")
 
     def should_run_validation_test(self, step):
 
@@ -186,37 +192,53 @@ class NeuralNet:
             num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
 
         else:
-            correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), 1)
+            correct_pred = tf.nn.in_top_k(tf.cast(self.output, tf.float32), tf.cast(pred_targets, tf.int32), self.config.topk)
             num_correct = tf.reduce_sum(tf.cast(correct_pred, tf.int32))
         toRun = [self.output, num_correct] + grabvars
         results = sess.run(toRun, feed_dict=feeder)
         res = results[1]
         grabbed = results[2:]
         if scenario is not "validation":
-            print("Results for scenario: ", scenario)
             print(res, " / ", len(case_list), " correct")
             print((res / len(case_list)) * 100, " % correct")
             print(1 - (res / len(case_list)), " error")
 
-            names = [str(c) if len(c) < 5 else str(c[0]) + str(c[1]) + ".." + str(c[-2]) + (str(c[-1])) for c in inputs]
-            targets = [str(t) if type(t) is list else ("["+str(t)+"]") if len(t) == 1 else "["+str(TFT.one_hot_to_int(t))+"]" for t in targets]
+            if scenario is "mapping":
+                names = [str(c) if len(c) < 5 else str(int(c[0])) + str(int(c[1])) + ".." + str(int(c[-2])) + (
+                    str(int(c[-1]))) for c in inputs]
+                targets = [
+                    str(t) if (type(t) is list and len(t) == 1) else ("[" + str(t) + "]") if len(t) == 1 else "[" + str(
+                        TFT.one_hot_to_int(t)) + "]" for t in targets]
 
-            combined = [name+target for name, target in zip(names, targets)]
-            self.display_grabvars(grabbed, grabvars, combined)
+                combined = [name + target for name, target in zip(names, targets)]
+                self.display_grabvars(grabbed, grabvars, combined)
 
         return 1 - (res / len(case_list))
 
     def display_grabvars(self, grabbed_vals, grabbed_vars, inputs):
         names = [x.name for x in grabbed_vars]
         print("\n" + "Grabbed Variables", end="\n")
-        print(names)
         for i, v in enumerate(grabbed_vals):
             if names: print("   " + names[i] + " = ", end="\n")
 
             print(v, end="\n\n")
-            if type(v) == np.ndarray and len(v.shape) > 1:  # If v is a matrix, use hinton plotting
-                TFT.hinton(v, names[i])
-                if "out" in names[i]:
+            if "bias" in names[i]: v = np.array([v])  # change into 2d array
+            if type(v) == np.ndarray and len(v.shape) > 1:
+                # Check if the number of the layer we want to view is in the name of the layer,
+                # and that the correct specifier (wgt, bias etc) is in the name, not a very pretty solution
+                should_show_map_layer = [str(m) in names[i].split(":")[0] and "out" in names[i] for m in
+                                         self.config.map_layers]
+                should_show_bias = [str(m) in names[i].split(":")[0] and "bias" in names[i] for m in self.config.db]
+                should_show_weight = [str(m) in names[i].split(":")[0] and "wgt" in names[i] for m in self.config.dw]
+                should_show_dend = [str(m) in names[i].split(":")[0] and "out" in names[i] for m in self.config.mdend]
+
+                if any(should_show_bias):
+                    TFT.hinton(v, names[i])
+                if any(should_show_weight):
+                    TFT.hinton(v, names[i])
+                if any(should_show_map_layer):
+                    TFT.hinton(v, names[i])
+                if any(should_show_dend):
                     self.display_dendrogram(v, inputs, names[i])
 
     def display_dendrogram(self, vals, inputs, title):

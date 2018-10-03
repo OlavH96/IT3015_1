@@ -1,6 +1,7 @@
 import numpy as np
 from Case import *
 import tflowtools as tft
+import numpy as np
 
 
 def unpack(array):
@@ -23,6 +24,13 @@ def scaleArray(array, min, max):
     return [scale(n, min, max) for n in array]
 
 
+def scale1DArrayMinMax(array):
+    minimum = np.min(array)
+    maximum = np.max(array)
+
+    return [scale(x, minimum, maximum) for x in np.nditer(array)]
+
+
 class CaseManager:
 
     def __init__(self, config, cfunc=None, cases=None, labels=None, vfrac=0.1, tfrac=0.1, case_fraction=1,
@@ -41,26 +49,30 @@ class CaseManager:
         if cases:
             self.cases = cases
         elif src_path:  # has file to read
-            print(src_function)
-            print(src_args)
             self.cases = src_function(*src_args)
         else:
             print("Generating cases")
             self.generate_cases()
-
         self.organize_cases()
-        print(self.training_cases[0].input)
-        print(self.training_cases[0].target)
+
     def generate_cases(self):
         self.cases = self.casefunc()  # Run the case generator.  Case = [input-vector, target-vector]
 
     def organize_cases(self):
         ca = np.array(self.cases)
         np.random.shuffle(ca)  # Randomly shuffle all cases
+        if self.config.scale_input and type(self.config.scale_input[0]) is str and "minmaxcolumns" in \
+                self.config.scale_input[0]:
+            print("Scaling inputs with minmaxcolumns")
+            labels = ca[:, -1]
+            ca = np.delete(ca, -1, axis=1)  # remove label
+            ca = np.apply_along_axis(scale1DArrayMinMax, 1, ca)
+            ca = np.insert(ca, ca.shape[1], labels, axis=1)
 
         # Handle case fraction
         ca = ca[:round(len(ca) * self.case_fraction)]
         ca = ca.tolist()
+
         self.cases = self.cases[:round(len(self.cases) * self.case_fraction)]
 
         separator1 = round(len(self.cases) * self.training_fraction)
@@ -74,7 +86,7 @@ class CaseManager:
         self.testing_cases = ca[separator2:]
         self.testing_cases = self.createCases(self.testing_cases)
 
-        if self.config.scale_input:
+        if self.config.scale_input and type(self.config.scale_input[0]) is int:
             print("Scale input to ", self.config.scale_input)
 
             for x in self.training_cases:
@@ -93,7 +105,8 @@ class CaseManager:
         if self.config.one_hot_output and self.config.one_hot_output[0]:
 
             return [Case(input=unpack(case[:-1]),
-                         target=unpack(tft.int_to_one_hot(int(case[-1]), size=self.config.one_hot_output[-1]))) for case in
+                         target=unpack(tft.int_to_one_hot(int(case[-1]), size=self.config.one_hot_output[-1]))) for case
+                    in
                     list]
         else:
             return [Case(input=unpack(case[:-1]), target=unpack(case[-1])) for case in list]
